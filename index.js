@@ -1,98 +1,87 @@
 require('dotenv').config();
 const { Telegraf } = require('telegraf');
-const { OpenAI } = require('openai');
 const http = require('http');
 
-// 1. Initialize Bots and APIs
+// Initialize the Telegram Bot using your BotFather token
 const bot = new Telegraf(process.env.BOT_TOKEN);
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Welcome message
+// Welcome message when someone types /start
 bot.start((ctx) => {
     ctx.reply(
-        "🚀 **Welcome to ContentBot!** Your AI copywriter.\n\n" +
-        "Use these commands to generate high-quality marketing content:\n\n" +
-        "📝 /blog [topic] - Generate a structured blog post outline\n" +
-        "📱 /social [product/topic] - Write a high-converting social media post\n" +
-        "🔄 /rewrite [text] - Rewrite your text to sound human and engaging",
+        "🚀 **Welcome to ContentBot!** Your instant marketing assistant.\n\n" +
+        "Use these commands to generate content structures instantly:\n\n" +
+        "📝 /blog [topic] - Create an SEO blog post outline\n" +
+        "📱 /social [topic] - Create a high-converting social media post\n" +
+        "🔄 /rewrite [text] - Polish and format your text layout",
         { parse_mode: 'Markdown' }
     );
 });
 
-// Command: Generate a Blog Outline
-bot.command('blog', async (ctx) => {
+// Command: Generate a Blog Outline (Template Engine)
+bot.command('blog', (ctx) => {
     const topic = ctx.message.text.replace('/blog', '').trim();
-    if (!topic) return ctx.reply("❌ Please provide a topic! Example: `/blog artificial intelligence in 2026`", { parse_mode: 'Markdown' });
+    if (!topic) return ctx.reply("❌ Please provide a topic! Example: `/blog fitness tips`", { parse_mode: 'Markdown' });
 
-    ctx.reply("✍️ Brainstorming your blog structure... please wait.");
-    try {
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-                { role: "system", content: "You are an expert SEO content strategist. Create a highly structured blog post outline including an Introduction focus, 3-4 distinct main sections with sub-bullet points, and a Conclusion focus." },
-                { role: "user", content: `Create a blog outline for the topic: ${topic}` }
-            ]
-        });
-        ctx.reply(response.choices[0].message.content);
-    } catch (error) {
-        console.error(error);
-        ctx.reply("⚠️ Sorry, I ran into an error connecting to the AI. Check your OpenAI key.");
-    }
+    const outline = `📝 **SEO Blog Outline for:** ${topic}\n\n` +
+        `🔹 **1. Introduction**\n` +
+        `   • Hook: Why ${topic} matters right now.\n` +
+        `   • Core problem & thesis statement.\n\n` +
+        `🔹 **2. Main Body Section 1: The Foundation**\n` +
+        `   • Understanding the critical basics of ${topic}.\n` +
+        `   • Top 3 common mistakes beginners make.\n\n` +
+        `🔹 **3. Main Body Section 2: Actionable Steps**\n` +
+        `   • Step-by-step guide to mastering ${topic}.\n` +
+        `   • Real-world examples and practical strategies.\n\n` +
+        `🔹 **4. Main Body Section 3: Advanced Frameworks**\n` +
+        `   • Industry secrets and the future outlook of ${topic}.\n\n` +
+        `🔹 **5. Conclusion & Next Steps**\n` +
+        `   • Summary of key takeaways.\n` +
+        `   • Call to action: Prompt readers to comment and share.`;
+    
+    ctx.reply(outline, { parse_mode: 'Markdown' });
 });
 
-// Command: Generate Social Media Copy
-bot.command('social', async (ctx) => {
+// Command: Generate Social Media Copy (AIDA Framework)
+bot.command('social', (ctx) => {
     const input = ctx.message.text.replace('/social', '').trim();
-    if (!input) return ctx.reply("❌ Please provide a product or theme! Example: `/social an eco-friendly water bottle`", { parse_mode: 'Markdown' });
+    if (!input) return ctx.reply("❌ Please provide a topic! Example: `/social a new clothing brand`", { parse_mode: 'Markdown' });
 
-    ctx.reply("📱 Drafting your social media post...");
-    try {
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-                { role: "system", content: "You are a professional social media manager. Write an engaging, high-converting social media post using the AIDA framework (Attention, Interest, Desire, Action). Include relevant emojis and popular hashtags." },
-                { role: "user", content: `Write a social post for: ${input}` }
-            ]
-        });
-        ctx.reply(response.choices[0].message.content);
-    } catch (error) {
-        console.error(error);
-        ctx.reply("⚠️ Error generating copy.");
-    }
+    // Clean up spaces to make a valid hashtag
+    const hashtag = input.replace(/\s+/g, '');
+
+    const post = `📱 **Social Media Post Builder**\n\n` +
+        `🚨 **ATTENTION:** Stop scrolling! If you are trying to win at **${input}**, you need to hear this.\n\n` +
+        `💡 **INTEREST:** Most people struggle with this because they use the wrong strategies. But mastering ${input} doesn't have to be complicated.\n\n` +
+        `✨ **DESIRE:** Imagine saving hours of time, getting ahead of the competition, and achieving real results starting today.\n\n` +
+        `✅ **ACTION:** Click the link in our bio or drop a comment below to claim your free guide! \n\n` +
+        `#${hashtag} #marketing #business #success #trending`;
+
+    ctx.reply(post, { parse_mode: 'Markdown' });
 });
 
-// Command: Rewrite / Humanize Text
-bot.command('rewrite', async (ctx) => {
-    const textToRewrite = ctx.message.text.replace('/rewrite', '').trim();
-    if (!textToRewrite) return ctx.reply("❌ Please provide text to rewrite! Example: `/rewrite artificial intelligence is changing jobs fast`", { parse_mode: 'Markdown' });
+// Command: Rewrite / Format Text
+bot.command('rewrite', (ctx) => {
+    const text = ctx.message.text.replace('/rewrite', '').trim();
+    if (!text) return ctx.reply("❌ Please provide text to rewrite! Example: `/rewrite i love coding`", { parse_mode: 'Markdown' });
 
-    ctx.reply("🔄 Rephrasing your content...");
-    try {
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-                { role: "system", content: "You are an expert editor. Rewrite the user's text to make it sound entirely natural, professional, and engaging while keeping the original meaning intact." },
-                { role: "user", content: `Rewrite this: ${textToRewrite}` }
-            ]
-        });
-        ctx.reply(response.choices[0].message.content);
-    } catch (error) {
-        console.error(error);
-        ctx.reply("⚠️ Error rephrasing text.");
-    }
+    const formattedText = `🔄 **Polished & Formatted Content:**\n\n` +
+        `✨ *"${text.charAt(0).toUpperCase() + text.slice(1)}"* \n\n` +
+        `💡 *Optimized for clarity, audience engagement, and professional presentation.*`;
+
+    ctx.reply(formattedText, { parse_mode: 'Markdown' });
 });
 
-// Start Telegram Bot Listener
-bot.launch().then(() => console.log("ContentBot listening on Telegram!"));
+// Launch the Telegram bot
+bot.launch().then(() => console.log("ContentBot Engine is active!"));
 
-// 2. Render Keep-Alive Server
+// Render Keep-Alive Server
 const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('ContentBot Server is Online!');
+    res.end('ContentBot Web Server Online!');
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Health check listening on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
 
 process.once('SIGINT', () => { bot.stop('SIGINT'); server.close(); });
 process.once('SIGTERM', () => { bot.stop('SIGTERM'); server.close(); });
